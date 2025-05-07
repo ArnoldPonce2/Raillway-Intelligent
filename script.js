@@ -1,43 +1,32 @@
-// 🌍 Inicializa el mapa
-const map = L.map('map').setView([21.8823, -102.2826], 13); // Aguascalientes
+// Inicializa el mapa
+const map = L.map('map').setView([21.8823, -102.2826], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+// Cargar y simular rutas
+fetch('data.json')
+  .then(res => res.json())
+  .then(data => {
+    data.forEach(item => {
+      const latlngs = item.ruta.map(p => [p.lat, p.lng]);
 
-L.marker([21.8823, -102.2826]).addTo(map).bindPopup('Origen').openPopup();
+      // Dibujar la línea de ruta
+      L.polyline(latlngs, { color: 'red' }).addTo(map);
 
-// 📊 Inicializa el gráfico KPI
-const ctx = document.getElementById('kpiChart').getContext('2d');
-const kpiChart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: ['Día 1', 'Día 2', 'Día 3', 'Día 4', 'Día 5'],
-    datasets: [{
-      label: 'Volumen transportado (toneladas)',
-      data: [100, 120, 90, 130, 110],
-      borderColor: 'blue',
-      fill: false
-    }]
-  },
-  options: {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true
-      }
-    }
-  }
-});
+      // Crear marcador móvil
+      const marker = L.circleMarker(latlngs[0], {
+        radius: 8,
+        color: 'blue'
+      }).addTo(map).bindPopup(item.vehiculo);
 
-// 🚚 Simulación animada (puede ser reemplazada con visualización real después)
-document.getElementById('animar').addEventListener('click', () => {
-  anime({
-    targets: '#animar',
-    translateX: 250,
-    duration: 1000,
-    direction: 'alternate',
-    loop: 2,
-    easing: 'easeInOutSine'
+      // Simular movimiento con anime.js
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < latlngs.length) {
+          marker.setLatLng(latlngs[index]);
+          index++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 1500); // cambia cada 1.5 segundos
+    });
   });
-});
